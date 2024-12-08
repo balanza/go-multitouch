@@ -12,13 +12,14 @@ go get -u github.com/balanza/go-multitouch@latest
 
 ```go
 import (
-    mtouch "github.com/balanza/go-multitouch"
+    "github.com/balanza/go-multitouch"
 )
 
 func main() {
-    tempDir, err := mtouch.Create([]mtouch.FileTree{
+	tree := []FileTree{
 		{
 			Name: "file.txt",
+			Content: "Lorem ipsum"
 		},
 		{
 			Name: "sub_dir",
@@ -30,8 +31,20 @@ func main() {
 		},
 		{
 			Name:     "empty_dir",
-			Children: []mtouch.FileTree{},
+			Children: []FileTree{},
 		},
-	})
+	}
+
+	// creates the file tree in a memory file system
+    fs, err := Touch(tree)
+
+	// created the file tree in the provided directory of the memory file system
+	fs, err := Touch(tree, WithBasePath("/my/path"))
+
+	// created the file tree in the provided directory of the current file system
+	fs, err := Touch(tree,
+			WithFileSystem(afero.NewOsFs()),
+			WithBasePath("/my/path")
+		)
 }
 ```

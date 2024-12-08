@@ -1,12 +1,13 @@
 package multitouch
 
 import (
-	"os"
 	"testing"
+
+	afero "github.com/spf13/afero"
 )
 
 func TestErrorOnEmpty(t *testing.T) {
-	_, err := Create([]FileTree{})
+	_, err := Touch([]FileTree{})
 	if err == nil {
 		t.Fatalf("Create([]FileTree{}) should return an error")
 	}
@@ -17,25 +18,14 @@ func TestCreateSingleFileInTempDir(t *testing.T) {
 		Name: "file.txt",
 	}
 
-	tempDir, err := Create([]FileTree{tree})
+	fs, err := Touch([]FileTree{tree})
 	if err != nil {
 		t.Fatalf("Should not return an error")
 	}
 
 	// Check if the file exists
-	if _, err := os.Stat(tempDir + "/file.txt"); err != nil {
+	if _, err := fs.Stat("file.txt"); err != nil {
 		t.Fatalf("File should exist")
-	}
-}
-
-func TestErrorOnDirNotExist(t *testing.T) {
-	tree := FileTree{
-		Name: "file.txt",
-	}
-	_, err := CreateInto("fake_dir", []FileTree{tree})
-
-	if err == nil {
-		t.Fatalf("Should fail on non-existing directory")
 	}
 }
 
@@ -61,28 +51,89 @@ func TestDeepStructure(t *testing.T) {
 			Name: "dir2",
 			Children: []FileTree{
 				{
-					Name: "file2.txt",
+					Name:    "file2.txt",
+					Content: "Hello, World!",
 				},
 			},
 		},
 	}
 
-	rootDir, err := Create(deepTree)
+	rootDir, err := Touch(deepTree)
 	if err != nil {
 		t.Fatalf("Should not return an error")
 	}
 
 	// Check if the file exists
 	files := []string{
-		rootDir + "/dir1/file1.txt",
-		rootDir + "/dir1/dir1_1/file1_1.txt",
-		rootDir + "/dir2/file2.txt",
+		"dir1/file1.txt",
+		"dir1/dir1_1/file1_1.txt",
+		"dir2/file2.txt",
 	}
 
 	for _, file := range files {
-		if _, err := os.Stat(file); err != nil {
+		if _, err := rootDir.Stat(file); err != nil {
 			t.Fatalf("File %s should exist", file)
 		}
 	}
+
+	content, err := afero.ReadFile(rootDir, "dir2/file2.txt")
+	if err != nil {
+		t.Fatalf("Failed to read file")
+	}
+	if contentStr := string(content); contentStr != "Hello, World!" {
+		t.Fatalf("File content is wrong: %s", contentStr)
+	}
+
+}
+
+func TestWithBasePath(t *testing.T) {
+	tree := FileTree{
+		Name: "file.txt",
+	}
+
+	rootFs := afero.NewMemMapFs()
+
+	fs, err := Touch([]FileTree{tree},
+		WithFileSystem(rootFs),
+		WithBasePath("/tmp"),
+	)
+	if err != nil {
+		t.Fatalf("Should not return an error")
+	}
+
+	// Check if the file exists
+	if _, err := fs.Stat("/file.txt"); err != nil {
+		t.Fatalf("File should exist")
+	}
+	if _, err := rootFs.Stat("/tmp/file.txt"); err != nil {
+		t.Fatalf("File should exist")
+	}
+
+}
+
+func TestWithRealFileSystem(t *testing.T) {
+	tree := FileTree{
+		Name: "file.txt",
+	}
+
+	rootFs := afero.NewOsFs()
+
+	fs, err := Touch([]FileTree{tree},
+		WithFileSystem(rootFs),
+		WithBasePath("/tmp"),
+	)
+	if err != nil {
+		t.Fatalf("Should not return an error")
+	}
+
+	// Check if the file exists
+	if _, err := fs.Stat("/file.txt"); err != nil {
+		t.Fatalf("File should exist")
+	}
+	if _, err := rootFs.Stat("/tmp/file.txt"); err != nil {
+		t.Fatalf("File should exist")
+	}
+
+	defer rootFs.RemoveAll("/tmp")
 
 }
