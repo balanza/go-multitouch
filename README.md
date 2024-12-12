@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// creates the file tree in a memory file system
-    fs, err := Touch(tree)
+	fs, err := Touch(tree)
 
 	// created the file tree in the provided directory of the memory file system
 	fs, err := Touch(tree, WithBasePath("/my/path"))
