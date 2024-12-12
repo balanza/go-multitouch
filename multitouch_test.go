@@ -83,7 +83,6 @@ func TestDeepStructure(t *testing.T) {
 	if contentStr := string(content); contentStr != "Hello, World!" {
 		t.Fatalf("File content is wrong: %s", contentStr)
 	}
-
 }
 
 func TestWithBasePath(t *testing.T) {
@@ -108,7 +107,6 @@ func TestWithBasePath(t *testing.T) {
 	if _, err := rootFs.Stat("/tmp/file.txt"); err != nil {
 		t.Fatalf("File should exist")
 	}
-
 }
 
 func TestWithRealFileSystem(t *testing.T) {
@@ -134,6 +132,8 @@ func TestWithRealFileSystem(t *testing.T) {
 		t.Fatalf("File should exist")
 	}
 
-	defer rootFs.RemoveAll("/tmp")
-
+	err = rootFs.RemoveAll("/tmp")
+	if err != nil {
+		t.Fatalf("Failed to cleanup")
+	}
 }

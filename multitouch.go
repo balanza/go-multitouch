@@ -1,16 +1,17 @@
 package multitouch
 
 import (
+	"errors"
 	"fmt"
 
 	afero "github.com/spf13/afero"
 )
 
-type options struct {
+type optionDict struct {
 	fs afero.Fs
 }
 
-type Option func(options *options) error
+type Option func(options *optionDict) error
 
 // FileTree represents a file or directory
 type FileTree struct {
@@ -26,14 +27,13 @@ type FileTree struct {
 
 // Touch creates a directory structure based on the given tree inside a temporary directory
 func Touch(tree []FileTree, opts ...Option) (afero.Fs, error) {
-
 	options, err := calculateOptions(opts)
 	if err != nil {
 		return nil, fmt.Errorf("invalid options: %w", err)
 	}
 
 	if len(tree) == 0 {
-		return nil, fmt.Errorf("tree must have at least one element")
+		return nil, errors.New("tree must have at least one element")
 	}
 
 	err = createTree(options.fs, tree)
@@ -46,7 +46,7 @@ func Touch(tree []FileTree, opts ...Option) (afero.Fs, error) {
 
 // WithFileSystem sets a custom filesystem to use
 func WithFileSystem(fs afero.Fs) Option {
-	return func(options *options) error {
+	return func(options *optionDict) error {
 		options.fs = fs
 		return nil
 	}
@@ -54,14 +54,14 @@ func WithFileSystem(fs afero.Fs) Option {
 
 // WithBasePath sets the base path for the filesystem
 func WithBasePath(path string) Option {
-	return func(options *options) error {
+	return func(options *optionDict) error {
 		options.fs = afero.NewBasePathFs(options.fs, path)
 		return nil
 	}
 }
 
-func calculateOptions(opts []Option) (options, error) {
-	options := options{
+func calculateOptions(opts []Option) (optionDict, error) {
+	options := optionDict{
 		fs: afero.NewMemMapFs(),
 	}
 	for _, opt := range opts {
@@ -85,21 +85,16 @@ func createTree(dest afero.Fs, tree []FileTree) error {
 
 func createSingle(dest afero.Fs, tree FileTree) error {
 	if tree.Children == nil {
-		// create a file
-		file, err := dest.Create(tree.Name)
+		err := createFile(dest, tree.Name, tree.Content)
 		if err != nil {
 			return err
 		}
-		file.WriteString(tree.Content)
-		file.Close()
-
 	} else {
-
 		// create a directory
 		newDest := afero.NewBasePathFs(dest, tree.Name)
 		err := dest.Mkdir(tree.Name, 0755)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create directory %s: %w", tree.Name, err)
 		}
 
 		// recursively create the children
@@ -109,6 +104,19 @@ func createSingle(dest afero.Fs, tree FileTree) error {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+func createFile(dest afero.Fs, name string, content string) error {
+	file, err := dest.Create(name)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s: %w", name, err)
+	}
+	defer file.Close()
+	_, err = file.WriteString(content)
+	if err != nil {
+		return fmt.Errorf("failed to write on file %s: %w", name, err)
 	}
 	return nil
 }
