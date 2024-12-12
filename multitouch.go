@@ -55,6 +55,14 @@ func WithFileSystem(fs afero.Fs) Option {
 // WithBasePath sets the base path for the filesystem
 func WithBasePath(path string) Option {
 	return func(options *optionDict) error {
+		dir, err := options.fs.Stat(path)
+		if err != nil {
+			return fmt.Errorf("base path must exists and be accessible: %w", err)
+		}
+		if !dir.IsDir() {
+			return errors.New("base path must be a directory")
+		}
+
 		options.fs = afero.NewBasePathFs(options.fs, path)
 		return nil
 	}
