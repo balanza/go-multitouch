@@ -68,6 +68,28 @@ func WithBasePath(path string) Option {
 	}
 }
 
+func Tree(nodes ...TreeNode) []TreeNode {
+	return nodes
+}
+
+func File(name, content string) TreeNode {
+	return TreeNode{
+		Name:    name,
+		Content: content,
+	}
+}
+
+func EmptyFile(name string) TreeNode {
+	return File(name, "")
+}
+
+func Dir(name string, children ...TreeNode) TreeNode {
+	return TreeNode{
+		Name:     name,
+		Children: children,
+	}
+}
+
 func calculateOptions(opts []Option) (optionDict, error) {
 	options := optionDict{
 		fs: afero.NewMemMapFs(),

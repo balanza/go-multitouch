@@ -16,24 +16,13 @@ import (
 )
 
 func main() {
-	tree := []TreeNode{
-		{
-			Name: "file.txt",
-			Content: "Lorem ipsum"
-		},
-		{
-			Name: "sub_dir",
-			Children: []mtouch.TreeNode{
-				{
-					Name: "other_file.txt",
-				},
-			},
-		},
-		{
-			Name:     "empty_dir",
-			Children: []TreeNode{},
-		},
-	}
+	tree := Tree(
+		File("file.txt", "Lorem ipsum"),
+		Dir("sub_dir", 
+			EmptyFile("other_file.txt"),
+		),
+		Dir("empty_dir")
+	)
 
 	// creates the file tree in a memory file system
 	fs, err := Touch(tree)
