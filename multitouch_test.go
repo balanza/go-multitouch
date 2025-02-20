@@ -86,19 +86,21 @@ func TestDeepStructure(t *testing.T) {
 }
 
 func TestWithBasePath(t *testing.T) {
-
-	const BASE_DIR string = "/foo"
+	const baseDir string = "/foo"
 
 	tree := FileTree{
 		Name: "file.txt",
 	}
 
 	rootFs := afero.NewMemMapFs()
-	rootFs.Mkdir(BASE_DIR, 0755)
+	err := rootFs.Mkdir(baseDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create directory: %s", err)
+	}
 
 	fs, err := Touch([]FileTree{tree},
 		WithFileSystem(rootFs),
-		WithBasePath(BASE_DIR),
+		WithBasePath(baseDir),
 	)
 	if err != nil {
 		t.Fatalf("Should not return an error")
@@ -108,24 +110,27 @@ func TestWithBasePath(t *testing.T) {
 	if _, err := fs.Stat("/file.txt"); err != nil {
 		t.Fatalf("File should exist")
 	}
-	if _, err := rootFs.Stat(BASE_DIR + "/file.txt"); err != nil {
+	if _, err := rootFs.Stat(baseDir + "/file.txt"); err != nil {
 		t.Fatalf("File should exist")
 	}
 }
 
 func TestWithRealFileSystem(t *testing.T) {
-	const BASE_DIR string = "/tmp/foo"
+	const baseDir string = "/tmp/foo"
 
 	tree := FileTree{
 		Name: "file.txt",
 	}
 
 	rootFs := afero.NewOsFs()
-	rootFs.MkdirAll(BASE_DIR, 0755)
+	err := rootFs.MkdirAll(baseDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create directory: %s", err)
+	}
 
 	fs, err := Touch([]FileTree{tree},
 		WithFileSystem(rootFs),
-		WithBasePath(BASE_DIR),
+		WithBasePath(baseDir),
 	)
 	if err != nil {
 		t.Fatalf("Should not return an error")
@@ -135,23 +140,22 @@ func TestWithRealFileSystem(t *testing.T) {
 	if _, err := fs.Stat("/file.txt"); err != nil {
 		t.Fatalf("File should exist")
 	}
-	if _, err := rootFs.Stat(BASE_DIR + "/file.txt"); err != nil {
+	if _, err := rootFs.Stat(baseDir + "/file.txt"); err != nil {
 		t.Fatalf("File should exist")
 	}
 
-	err = rootFs.RemoveAll(BASE_DIR)
+	err = rootFs.RemoveAll(baseDir)
 	if err != nil {
 		t.Fatalf("Failed to cleanup: %s", err)
 	}
 }
 
 func TestErrorIfBasePathDoesNotExist(t *testing.T) {
-
 	testFs := []afero.Fs{afero.NewMemMapFs(), afero.NewOsFs()}
 
 	for _, rootFs := range testFs {
 		t.Run(rootFs.Name(), func(t *testing.T) {
-			const BASE_DIR string = "/foo"
+			const baseDir string = "/foo"
 
 			tree := FileTree{
 				Name: "file.txt",
@@ -161,18 +165,17 @@ func TestErrorIfBasePathDoesNotExist(t *testing.T) {
 
 			_, err := Touch([]FileTree{tree},
 				WithFileSystem(rootFs),
-				WithBasePath(BASE_DIR),
+				WithBasePath(baseDir),
 			)
 			if err == nil {
 				t.Fatalf("Should return an error")
 			}
 		})
 	}
-
 }
 
 func TestNestedDirectories(t *testing.T) {
-	const BASE_DIR string = "/foo"
+	const baseDir string = "/foo"
 
 	tree := FileTree{
 		Name: "my/nested/dir",
@@ -182,11 +185,14 @@ func TestNestedDirectories(t *testing.T) {
 	}
 
 	rootFs := afero.NewMemMapFs()
-	rootFs.Mkdir(BASE_DIR, 0755)
+	err := rootFs.Mkdir(baseDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create directory: %s", err)
+	}
 
 	fs, err := Touch([]FileTree{tree},
 		WithFileSystem(rootFs),
-		WithBasePath(BASE_DIR),
+		WithBasePath(baseDir),
 	)
 	if err != nil {
 		t.Fatalf("Should not return an error")
@@ -206,4 +212,3 @@ func TestNestedDirectories(t *testing.T) {
 		t.Fatalf("File should exist")
 	}
 }
- 
