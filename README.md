@@ -16,14 +16,14 @@ import (
 )
 
 func main() {
-	tree := []FileTree{
+	tree := []TreeNode{
 		{
 			Name: "file.txt",
 			Content: "Lorem ipsum"
 		},
 		{
 			Name: "sub_dir",
-			Children: []mtouch.FileTree{
+			Children: []mtouch.TreeNode{
 				{
 					Name: "other_file.txt",
 				},
@@ -31,7 +31,7 @@ func main() {
 		},
 		{
 			Name:     "empty_dir",
-			Children: []FileTree{},
+			Children: []TreeNode{},
 		},
 	}
 

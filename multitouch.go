@@ -13,8 +13,8 @@ type optionDict struct {
 
 type Option func(options *optionDict) error
 
-// FileTree represents a file or directory
-type FileTree struct {
+// TreeNode represents a file or directory
+type TreeNode struct {
 	// the name of the file or directory
 	Name string
 	// optional content of the file, ignored if this is a directory
@@ -22,11 +22,11 @@ type FileTree struct {
 	// if nil, this is a file
 	// if not nil, this is a directory
 	// and the children are the files and directories
-	Children []FileTree
+	Children []TreeNode
 }
 
 // Touch creates a directory structure based on the given tree inside a temporary directory
-func Touch(tree []FileTree, opts ...Option) (afero.Fs, error) {
+func Touch(tree []TreeNode, opts ...Option) (afero.Fs, error) {
 	options, err := calculateOptions(opts)
 	if err != nil {
 		return nil, fmt.Errorf("invalid options: %w", err)
@@ -81,7 +81,7 @@ func calculateOptions(opts []Option) (optionDict, error) {
 	return options, nil
 }
 
-func createTree(dest afero.Fs, tree []FileTree) error {
+func createTree(dest afero.Fs, tree []TreeNode) error {
 	for _, child := range tree {
 		err := createSingle(dest, child)
 		if err != nil {
@@ -91,7 +91,7 @@ func createTree(dest afero.Fs, tree []FileTree) error {
 	return nil
 }
 
-func createSingle(dest afero.Fs, tree FileTree) error {
+func createSingle(dest afero.Fs, tree TreeNode) error {
 	if tree.Children == nil {
 		err := createFile(dest, tree.Name, tree.Content)
 		if err != nil {
