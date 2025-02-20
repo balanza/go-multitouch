@@ -170,3 +170,40 @@ func TestErrorIfBasePathDoesNotExist(t *testing.T) {
 	}
 
 }
+
+func TestNestedDirectories(t *testing.T) {
+	const BASE_DIR string = "/foo"
+
+	tree := FileTree{
+		Name: "my/nested/dir",
+		Children: []FileTree{
+			{Name: "file.txt"},
+		},
+	}
+
+	rootFs := afero.NewMemMapFs()
+	rootFs.Mkdir(BASE_DIR, 0755)
+
+	fs, err := Touch([]FileTree{tree},
+		WithFileSystem(rootFs),
+		WithBasePath(BASE_DIR),
+	)
+	if err != nil {
+		t.Fatalf("Should not return an error")
+	}
+
+	// Check if the file exists
+	if _, err := fs.Stat("my"); err != nil {
+		t.Fatalf("Directory my should exist")
+	}
+	if _, err := fs.Stat("my/nested"); err != nil {
+		t.Fatalf("Directory nested should exist")
+	}
+	if _, err := fs.Stat("my/nested/dir"); err != nil {
+		t.Fatalf("Directory dir should exist")
+	}
+	if _, err := fs.Stat("my/nested/dir/file.txt"); err != nil {
+		t.Fatalf("File should exist")
+	}
+}
+ 
