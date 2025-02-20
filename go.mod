@@ -1,4 +1,4 @@
-module github.com/balanza/go-multitouch
+module github.com/balanza/supertouch
 
 go 1.23
 

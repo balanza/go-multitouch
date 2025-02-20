@@ -1,4 +1,4 @@
-package multitouch
+package supertouch
 
 import (
 	"errors"
